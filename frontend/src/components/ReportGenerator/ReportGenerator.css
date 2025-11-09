@@ -1,0 +1,98 @@
+/* components/ReportGenerator/ReportGenerator.css */
+.report-generator {
+  background: linear-gradient(145deg,#f4f4f4 , #000000 );
+    padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.report-generator h2 {
+  margin: 0 0 0.5rem 0;
+  color: #000000;
+  font-size: 1.5rem;
+}
+
+.description {
+  color: #353535;
+  margin: 0 0 1.5rem 0;
+  font-size: 1rem;
+}
+
+.generator-form {
+  margin-bottom: 1.5rem;
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 1rem;
+}
+
+.topic-input {
+  flex: 1;
+  padding: 12px 16px;
+  border: 3px solid #000000;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: border-color 0.3s ease;
+}
+
+.topic-input:focus {
+  outline: none;
+  border-color: #667eea;
+}
+
+.topic-input:disabled {
+  background-color:rgb(255, 255, 255);
+  cursor: not-allowed;
+}
+
+.generate-btn {
+  padding: 12px 24px;
+  background-color:#007bff;
+  color: rgb(0, 0, 0);
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.generate-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+}
+
+.generate-btn:disabled {
+   background: linear-gradient(145deg,#ffffff , #000000 );
+  cursor: not-allowed;
+  transform: none;
+}
+
+.examples-title {
+  font-size: 1rem;
+  color: #333333;
+  margin-bottom: 0.5rem;
+}
+
+.example-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.example-tag {
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border: 3px solid #000000;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  color: #000000;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.example-tag:hover {
+  background: #e9ecef;
+  border-color: #667eea;
+}

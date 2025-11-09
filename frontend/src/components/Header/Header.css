@@ -1,0 +1,35 @@
+/* components/Header/Header.css */
+.header {
+background: linear-gradient(145deg,#ffffff , #000000 );
+  color: rgb(0, 0, 0);
+  padding: 2rem 0;
+height:3rem;
+  text-align: left;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+border-radius: 25px;
+margin:0 10px;
+position: relative;
+top:10px;
+margin-bottom:10px;
+}
+.header-content {
+
+  display: flex;
+    padding-left:3%;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+
+.header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.header p {
+  margin: 0;
+  font-size: 1.1rem;
+  opacity: 0.9;
+  color:black;
+}

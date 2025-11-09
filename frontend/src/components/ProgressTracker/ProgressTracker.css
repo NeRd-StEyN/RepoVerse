@@ -1,0 +1,103 @@
+.progress-tracker {
+  background: linear-gradient(145deg,#ffffff , #000000 );
+  color: #000000;
+  padding: 16px 0 16px 16px;
+  border-radius: 12px;
+  margin-top: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 700px;
+}
+
+.progress-tracker h3 {
+  margin-bottom: 10px;
+}
+
+.progress-stage {
+  display: flex;
+  align-items: flex-start;
+  margin: 12px 0;
+}
+
+.stage-indicator {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  margin-right: 12px;
+}
+
+.indicator-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  text-align: center;
+  line-height: 32px;
+  border: 3px solid #000000;
+  background: #fafafa;
+  font-weight: bold;
+  font-size: 25px;
+  transition: all 0.3s ease;
+}
+
+/* 🔄 Spinner animation for in-progress stage */
+.indicator-circle.in-progress {
+  background: #e9971d;
+  border-color: #b17d2f;
+  color: #ffffff;
+  animation: spin 0.8s linear infinite; /* 👈 rotate continuously */
+}
+
+/* ✅ Completed stage */
+.indicator-circle.completed {
+  background: #2ee434;
+  border-color: #3cb841;
+  color: #fff;
+}
+
+/* Connection line between indicators */
+.connection-line {
+  width: 2px;
+  height: 30px;
+  background: #555;
+  margin-top: 4px;
+}
+
+.connection-line.completed {
+  background: #00ff08;
+}
+
+.stage-info {
+  flex: 1;
+}
+
+.stage-label {
+  font-weight: bold;
+  display: block;
+}
+
+.stage-description {
+  font-size: 0.9em;
+  color: #161616;
+  
+}
+
+.completion-message {
+  margin-top: 20px;
+  font-size: 1.1em;
+  text-align: center;
+  background: #4caf50;
+  color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+}
+
+/* ✨ Spinner keyframes */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
