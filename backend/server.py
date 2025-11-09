@@ -1,14 +1,14 @@
 import os
 import threading
-import time
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
-from lang import app  # your compiled LangGraph graph
-
-# Import chat functions
+from lang import app  # your LangGraph workflow
 from chat_handler import init_chat_from_base64, chat_with_pdf
 
-server = Flask(__name__)
+# -------------------------------------------------------------------
+# Flask App Config (⚙️ Serving React dist folder)
+# -------------------------------------------------------------------
+server = Flask(__name__, static_folder="build", static_url_path="/")
 CORS(server)
 
 # -------------------------------------------------------------------
@@ -27,7 +27,6 @@ def background_generate(topic):
         generation_status[topic] = "in_progress"
 
         for state in app.stream({"topic": topic}):
-            # 🧭 Track progress stages
             if "intro" in state or "planner" in state:
                 progress_state[topic]["topicAnalysis"] = True
             elif "retriever" in state:
@@ -67,7 +66,6 @@ def background_generate(topic):
         }
         generation_status[topic] = "failed"
 
-
 # -------------------------------------------------------------------
 # Report Generation API
 # -------------------------------------------------------------------
@@ -85,7 +83,6 @@ def generate_report():
     if topic in generation_status and generation_status[topic] == "in_progress":
         return jsonify({"message": "Report generation already in progress"})
 
-    # Initialize progress
     progress_state[topic] = {
         "topicAnalysis": False,
         "dataGathering": False,
@@ -94,7 +91,6 @@ def generate_report():
     }
     generation_status[topic] = "in_progress"
 
-    # Background thread
     thread = threading.Thread(target=background_generate, args=(topic,))
     thread.daemon = True
     thread.start()
@@ -138,7 +134,6 @@ def get_report(topic):
 # -------------------------------------------------------------------
 # 🧠 Chat APIs — Calls chat_handler.py
 # -------------------------------------------------------------------
-
 @server.route("/chat/init", methods=["POST"])
 def chat_init():
     """Initialize chat session with Base64 PDF."""
@@ -174,7 +169,7 @@ def chat_message():
 
 
 # -------------------------------------------------------------------
-# Health Check
+# 🩺 Health Check
 # -------------------------------------------------------------------
 @server.route("/health")
 def health():
@@ -182,7 +177,22 @@ def health():
 
 
 # -------------------------------------------------------------------
-# Run Server
+# 🌐 Serve React Frontend (Vite dist folder)
+# -------------------------------------------------------------------
+@server.route("/")
+def serve_react():
+    """Serve main React app."""
+    return send_from_directory(server.static_folder, "index.html")
+
+@server.errorhandler(404)
+def not_found(e):
+    """Fallback to React router for unknown routes."""
+    return send_from_directory(server.static_folder, "index.html")
+
+
+# -------------------------------------------------------------------
+# 🏁 Run Server
 # -------------------------------------------------------------------
 if __name__ == "__main__":
-    server.run(host="0.0.0.0", port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    server.run(host="0.0.0.0", port=port)
