@@ -10,7 +10,7 @@ const ProgressTracker = ({ topic, progress = {}, isGenerating = false }) => {
 
     const pollProgress = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/progress/${encodeURIComponent(topic)}`);
+        const response = await fetch(`/progress/${encodeURIComponent(topic)}`);
         const data = await response.json();
         
         if (data.error) {

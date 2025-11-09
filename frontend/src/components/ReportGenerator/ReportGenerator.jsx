@@ -34,7 +34,7 @@ const ReportGenerator = ({
 
     try {
       console.log("Starting report generation. Sending topic to backend:", localTopic);
-      const res = await fetch("http://localhost:5000/generate_report", {
+      const res = await fetch("/generate_report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic: localTopic }),
@@ -57,7 +57,7 @@ const ReportGenerator = ({
     const interval = setInterval(async () => {
       try {
         const res = await fetch(
-          `http://localhost:5000/progress/${encodeURIComponent(localTopic)}`
+          `/progress/${encodeURIComponent(localTopic)}`
         );
         if (!res.ok) throw new Error("Failed to fetch progress");
 
@@ -70,7 +70,7 @@ const ReportGenerator = ({
           console.log("🎯 Report complete, fetching PDF...");
 
           const pdfRes = await fetch(
-            `http://localhost:5000/report/${encodeURIComponent(localTopic)}`
+            `/report/${encodeURIComponent(localTopic)}`
           );
           if (!pdfRes.ok) throw new Error("Failed to fetch report PDF");
 
