@@ -37,9 +37,11 @@ function App() {
             isGenerating={isGenerating}
           />
           <ChatInterface 
-            topic={activeTopic}
-            pdfUrl={pdfData}
-          />
+  key={activeTopic + (isGenerating ? "-gen" : "")} 
+  topic={activeTopic}
+  pdfUrl={pdfData}
+/>
+
         </div>
       </div>
     </div>
