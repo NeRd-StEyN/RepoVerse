@@ -10,3 +10,4 @@ matplotlib>=3.8.2
 numpy>=1.26.2
 wikipedia-api>=0.6.0
 langgraph>=0.1.0
+gunicorn
