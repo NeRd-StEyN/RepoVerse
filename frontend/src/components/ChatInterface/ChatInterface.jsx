@@ -45,7 +45,7 @@ const ChatInterface = ({ pdfUrl, topic }) => {
         ? pdfUrl.split(",")[1]
         : pdfUrl;
 
-      const response = await fetch("http://localhost:5000/chat/init", {
+      const response = await fetch("/chat/init", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -91,7 +91,7 @@ const ChatInterface = ({ pdfUrl, topic }) => {
     setMessages((prev) => [...prev, { type: "user", content: userMessage }]);
 
     try {
-      const response = await fetch("http://localhost:5000/chat/message", {
+      const response = await fetch("/chat/message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

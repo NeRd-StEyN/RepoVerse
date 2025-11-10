@@ -70,6 +70,7 @@
   color: #000000;
   font-weight:bold;
   align-self: flex-start;
+  padding-left:10px;
   border-bottom-left-radius: 4px;
 }
 
