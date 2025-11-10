@@ -16,5 +16,5 @@ wikipedia
 faiss-cpu
 groq
 langchain-huggingface
-sentence-transformers
+
 
