@@ -128,3 +128,35 @@ iframe[type="application/pdf"] {
 .report-text br {
   margin: 0.5rem 0;
 }
+
+.pdf-actions {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.download-btn,
+.open-mobile-btn {
+  background: linear-gradient(135deg, #4f46e5, #3b82f6);
+  color: white;
+  font-weight: 500;
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 0.2s ease, background 0.3s ease;
+}
+
+.download-btn:hover,
+.open-mobile-btn:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, #4338ca, #2563eb);
+}
+
+.mobile-pdf-view {
+  text-align: center;
+  margin-top: 2rem;
+  padding: 1rem;
+  background: #f9fafb;
+  border-radius: 12px;
+}
+
