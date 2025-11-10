@@ -116,7 +116,7 @@ export const ReportDisplay = ({ topic, pdfUrl, isGenerating }) => {
               />
             ) : (
               // Mobile: open in new tab
-              <div className="mobile-pdf-view">
+              <div className="mobile-pdf-notice">
                 <p>📱 PDF preview not supported on mobile.</p>
                 <button
                   onClick={openPdfInNewTab}

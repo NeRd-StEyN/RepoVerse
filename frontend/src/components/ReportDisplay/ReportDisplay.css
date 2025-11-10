@@ -152,11 +152,11 @@ iframe[type="application/pdf"] {
   background: linear-gradient(135deg, #4338ca, #2563eb);
 }
 
-.mobile-pdf-view {
+.mobile-pdf-notice {
   text-align: center;
   margin-top: 2rem;
   padding: 1rem;
-  background: #f9fafb;
+  
   border-radius: 12px;
 }
 
