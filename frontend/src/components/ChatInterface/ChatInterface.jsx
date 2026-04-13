@@ -54,7 +54,7 @@ const ChatInterface = ({ pdfUrl, topic }) => {
         ? pdfUrl.split(",")[1]
         : pdfUrl;
 
-      const response = await fetch("/api/chat/init", {
+      const response = await fetch("http://localhost:5000/chat/init", {
         method: "POST",
 
         headers: { "Content-Type": "application/json" },
@@ -97,42 +97,30 @@ const ChatInterface = ({ pdfUrl, topic }) => {
     setInputMessage("");
     setIsLoading(true);
 
+
     setMessages((prev) => [...prev, { type: "user", content: userMessage }]);
 
     try {
-      const response = await fetch("/api/chat/message", {
+      const response = await fetch("http://localhost:5000/chat/message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           session_id: sessionId,
           message: userMessage,
-          stream: true,
         }),
       });
 
       if (!response.ok) throw new Error("Failed to get response");
 
-      // Add a placeholder assistant message
-      setMessages((prev) => [...prev, { type: "assistant", content: "" }]);
+      const data = await response.json();
 
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let fullContent = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        fullContent += chunk;
-
-        setMessages((prev) => {
-          const newMessages = [...prev];
-          const lastIndex = newMessages.length - 1;
-          newMessages[lastIndex] = { ...newMessages[lastIndex], content: fullContent };
-          return newMessages;
-        });
-      }
+      setMessages((prev) => [
+        ...prev,
+        {
+          type: "assistant",
+          content: data.response || "⚠️ No response from AI.",
+        },
+      ]);
     } catch (error) {
       console.error("Error sending message:", error);
       setMessages((prev) => [

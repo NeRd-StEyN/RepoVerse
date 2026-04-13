@@ -1,400 +1,403 @@
+ 
 .report-display {
-    background: #111111;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-    flex: 0 0 45%;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border: 1px solid #333;
-    color: #ffffff;
+  background: #111111;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  flex: 0 0 45%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #333;
+  color: #ffffff;
 }
 
 .empty-state {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #aaaaaa;
-    font-size: 1.2rem;
-    font-weight: 600;
-    text-align: center;
-    padding: 2rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #aaaaaa;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 2rem;
 }
 
 .empty-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    opacity: 0.7;
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.7;
 }
 
 .empty-subtext {
-    font-size: 0.9rem;
-    color: #666;
-    margin-top: 0.5rem;
-    font-weight: 400;
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 0.5rem;
+  font-weight: 400;
 }
 
 .report-header {
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid #333;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 16px 16px 0 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #333;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px 16px 0 0;
 }
 
 .report-header h3 {
-    margin: 0;
-    color: #ffffff;
-    font-size: 1.2rem;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-}
-
-.edit-toggle-btn {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    border: 1px solid #444;
-    padding: 6px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.85rem;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.edit-toggle-btn:hover {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: #666;
-}
-
-.edit-toggle-btn.active {
-    background: #007bff;
-    border-color: #007bff;
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
 }
 
 .report-content {
-    flex: 1;
-    padding: 0;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    min-height: 0;
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
 }
 
-.pdf-placeholder {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 3rem 2rem;
-    background: #1a1a1a;
+ 
+.report-content>div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
-.pdf-icon {
-    font-size: 5rem;
-    margin-bottom: 1.5rem;
-    color: #007bff;
-    filter: drop-shadow(0 0 15px rgba(0, 123, 255, 0.3));
-    animation: bounceIcon 2s infinite ease-in-out;
+ 
+iframe[type="application/pdf"] {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
 }
 
-@keyframes bounceIcon {
-
-    0%,
-    100% {
-        transform: translateY(0);
-    }
-
-    50% {
-        transform: translateY(-10px);
-    }
+ 
+.report-content iframe {
+  flex: 1;
+  min-height: 100%;
+  background: #222;
+  border: none;
 }
 
-.pdf-info h4 {
-    font-size: 1.5rem;
-    color: #ffffff;
-    margin-bottom: 0.5rem;
-}
-
-.pdf-info p {
-    color: #888;
-    margin-bottom: 2rem;
-    max-width: 300px;
-}
-
-.pdf-view-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    width: 100%;
-    max-width: 280px;
-}
-
-.pdf-full-preview {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    background: #111;
-}
-
-.pdf-viewer-container-embedded {
-    flex: 1;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    background: #0a0a0a;
-}
-
-.pdf-view-actions-bar {
-    display: flex;
-    justify-content: center;
-    gap: 1.5rem;
-    padding: 1rem;
-    background: #1a1a1a;
-    border-top: 1px solid #333;
-}
-
-.view-new-tab-btn,
-.download-btn {
-    padding: 10px 20px;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    font-size: 0.9rem;
-    border: none;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.view-new-tab-btn {
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
-    border: 1px solid #444;
-}
-
-.view-new-tab-btn:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: #666;
-    transform: translateY(-2px);
-}
-
-.download-btn {
-    background: linear-gradient(135deg, #007bff, #0056b3);
-    color: white;
-}
-
-.download-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-}
-
-.report-editor-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    background: #1a1a1a;
-    padding: 1rem;
-}
-
-.report-editor {
-    flex: 1;
-    background: #222;
-    color: #eee;
-    border: 1px solid #333;
-    border-radius: 8px;
-    padding: 1.5rem;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    font-size: 1rem;
-    line-height: 1.6;
-    resize: none;
-    outline: none;
-    transition: border-color 0.2s;
-}
-
-.report-editor:focus {
-    border-color: #007bff;
-}
-
-.editor-actions {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 1rem;
-}
-
-.save-btn {
-    background: #28a745;
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s;
-}
-
-.save-btn:hover {
-    background: #218838;
-    transform: translateY(-1px);
-}
-
-.save-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.save-error {
-    color: #ff4757;
-    font-size: 0.85rem;
-}
-
-.floating-rewrite-btn {
-    background: linear-gradient(135deg, #6c5ce7, #a29bfe);
-    color: white;
-    border: none;
-    padding: 8px 16px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.85rem;
-    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.4);
-    animation: fadeInRewriter 0.2s ease-out;
-    transition: transform 0.2s, box-shadow 0.2s;
-    pointer-events: auto;
-}
-
-.floating-rewrite-btn:hover {
-    transform: scale(1.05) translateY(-2px);
-    box-shadow: 0 6px 20px rgba(108, 92, 231, 0.6);
-}
-
-.floating-rewrite-btn:disabled {
-    background: #444;
-    cursor: wait;
-}
-
-@keyframes fadeInRewriter {
-    from {
-        opacity: 0;
-        transform: translateY(5px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.floating-rewrite-btn.mobile-fixed {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    max-width: 320px;
-    z-index: 2000;
-    padding: 12px;
-    font-size: 1rem;
-    border-radius: 12px;
-    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5);
-    background: linear-gradient(135deg, #6c5ce7, #8e44ad);
-}
-
+.report-placeholder,
 .generating-placeholder {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: #ffffff;
-    text-align: center;
-    background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #ffffff;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .generating-placeholder p {
-    margin-top: 1.5rem;
-    font-size: 1.1rem;
-    color: #ddd;
+  margin-top: 1.5rem;
+  font-size: 1.1rem;
+  color: #ddd;
 }
 
 .loading-subtext {
-    font-size: 0.9rem;
-    color: #888;
-    margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: #888;
+  margin-top: 0.5rem;
 }
 
 .loading-spinner {
-    width: 48px;
-    height: 48px;
-    border: 4px solid rgba(255, 255, 255, 0.1);
-    border-top: 4px solid #007bff;
-    border-radius: 50%;
-    animation: spin 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
 }
 
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
+  0% {
+    transform: rotate(0deg);
+  }
 
-    100% {
-        transform: rotate(360deg);
-    }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.report-text {
+  line-height: 1.6;
+  color: #ddd;
+  padding: 1rem;
+}
+
+.report-text h1 {
+  font-size: 1.8rem;
+  color: #fff;
+  margin: 1.5rem 0 1rem 0;
+  border-bottom: 2px solid #444;
+  padding-bottom: 0.5rem;
+}
+
+.report-text h2 {
+  font-size: 1.4rem;
+  color: #eee;
+  margin: 1.2rem 0 0.8rem 0;
+}
+
+.report-text h3 {
+  font-size: 1.2rem;
+  color: #ccc;
+  margin: 1rem 0 0.6rem 0;
+}
+
+.report-text p {
+  margin: 0.8rem 0;
+  text-align: justify;
+}
+
+.report-text li {
+  margin: 0.4rem 0;
+  padding-left: 1rem;
+  color: #ccc;
+}
+
+.report-text br {
+  margin: 0.5rem 0;
 }
 
 .pdf-actions {
-    text-align: center;
-    padding: 1rem;
-    background: rgba(0, 0, 0, 0.2);
-    border-top: 1px solid #333;
+  text-align: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid #333;
 }
 
 .download-btn,
 .open-mobile-btn {
-    background: linear-gradient(135deg, #007bff, #0056b3);
-    color: white;
-    font-weight: 600;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-    font-size: 0.95rem;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  font-weight: 600;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  font-size: 0.95rem;
+}
+
+ 
+.report-display {
+  background: #111111;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  flex: 0 0 45%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #333;
+  color: #ffffff;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #aaaaaa;
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-align: center;
+  padding: 2rem;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.7;
+}
+
+.empty-subtext {
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 0.5rem;
+  font-weight: 400;
+}
+
+.report-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #333;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px 16px 0 0;
+}
+
+.report-header h3 {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.report-content {
+  flex: 1;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+ 
+.report-content>div {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+ 
+iframe[type="application/pdf"] {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 100% !important;
+}
+
+ 
+.report-content iframe {
+  flex: 1;
+  min-height: 100%;
+  background: #222;
+  border: none;
+}
+
+.report-placeholder,
+.generating-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #ffffff;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.generating-placeholder p {
+  margin-top: 1.5rem;
+  font-size: 1.1rem;
+  color: #ddd;
+}
+
+.loading-subtext {
+  font-size: 0.9rem;
+  color: #888;
+  margin-top: 0.5rem;
+}
+
+.loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top: 4px solid #007bff;
+  border-radius: 50%;
+  animation: spin 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.report-text {
+  line-height: 1.6;
+  color: #ddd;
+  padding: 1rem;
+}
+
+.report-text h1 {
+  font-size: 1.8rem;
+  color: #fff;
+  margin: 1.5rem 0 1rem 0;
+  border-bottom: 2px solid #444;
+  padding-bottom: 0.5rem;
+}
+
+.report-text h2 {
+  font-size: 1.4rem;
+  color: #eee;
+  margin: 1.2rem 0 0.8rem 0;
+}
+
+.report-text h3 {
+  font-size: 1.2rem;
+  color: #ccc;
+  margin: 1rem 0 0.6rem 0;
+}
+
+.report-text p {
+  margin: 0.8rem 0;
+  text-align: justify;
+}
+
+.report-text li {
+  margin: 0.4rem 0;
+  padding-left: 1rem;
+  color: #ccc;
+}
+
+.report-text br {
+  margin: 0.5rem 0;
+}
+
+.pdf-actions {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-top: 1px solid #333;
+}
+
+.download-btn,
+.open-mobile-btn {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  font-weight: 600;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  font-size: 0.95rem;
 }
 
 .download-btn:hover,
 .open-mobile-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
 }
 
 .mobile-pdf-notice {
-    text-align: center;
-    margin-top: 2rem;
-    padding: 2rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    border: 1px solid #333;
+  text-align: center;
+  margin-top: 2rem;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  border: 1px solid #333;
 }
 
+ 
 @media (max-width: 1024px) {
-    .report-display {
-        min-height: 500px;
-        flex: none;
-        width: 100%;
-    }
+  .report-display {
+    min-height: 500px;
+    flex: none;
+    width: 100%;
+  }
 }

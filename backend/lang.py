@@ -21,22 +21,6 @@ from io import BytesIO
 import base64
 from dotenv import load_dotenv
 from deep_translator import GoogleTranslator
-import sys
-
-def safe_print(*args, **kwargs):
-    """Print that ignores characters that cannot be encoded by the terminal."""
-    try:
-        print(*args, **kwargs)
-    except UnicodeEncodeError:
-        new_args = []
-        encoding = sys.stdout.encoding or "ascii"
-        for arg in args:
-            if isinstance(arg, str):
-                new_args.append(arg.encode(encoding, errors="ignore").decode(encoding))
-            else:
-                new_args.append(arg)
-        print(*new_args, **kwargs)
-
 
 load_dotenv()
 
@@ -60,18 +44,10 @@ LANGUAGE_CODES = {
 
 
 
-# Translation cache to avoid redundant API calls
-_translation_cache = {}
-
 def translate_long_text(text: str, target_language: str, max_chunk: int = 4500) -> str:
-    """Translate text in parallel using chunks. Returns original if translation fails."""
-    if target_language == "English" or not text or not text.strip():
+    """Translate text in chunks to avoid API limits. Returns original if translation fails."""
+    if target_language == "English" or not text:
         return text
-    
-    # Check cache for exact matches (useful for headings/labels)
-    cache_key = (text, target_language)
-    if cache_key in _translation_cache:
-        return _translation_cache[cache_key]
     
     try:
         lang_code = LANGUAGE_CODES.get(target_language, "en")
@@ -80,41 +56,29 @@ def translate_long_text(text: str, target_language: str, max_chunk: int = 4500) 
         
         translator = GoogleTranslator(source='en', target=lang_code)
         
-        # For short strings, just translate directly
-        if len(text) <= 500:
-            res = translator.translate(text)
-            _translation_cache[cache_key] = res
-            return res
-
-        # For long text, split into logical blocks (paragraphs)
-        paragraphs = [p.strip() for p in text.split('\n') if p.strip()]
-        if not paragraphs:
-            return text
-
-        # Translate paragraphs in parallel
-        from concurrent.futures import ThreadPoolExecutor
-        def _safe_translate(t):
-            try:
-                # Cache at paragraph level too
-                p_cache_key = (t, target_language)
-                if p_cache_key in _translation_cache:
-                    return _translation_cache[p_cache_key]
-                
-                res = translator.translate(t)
-                _translation_cache[p_cache_key] = res
-                return res
-            except:
-                return t
-
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            translated_paragraphs = list(executor.map(_safe_translate, paragraphs))
+ 
+        if len(text) <= max_chunk:
+            return translator.translate(text)
         
-        result = "\n\n".join(translated_paragraphs)
-        _translation_cache[cache_key] = result
-        return result
 
+        paragraphs = text.split('\n')
+        translated = []
+        current_batch = ""
+        
+        for para in paragraphs:
+            if len(current_batch) + len(para) + 1 <= max_chunk:
+                current_batch += para + "\n"
+            else:
+                if current_batch.strip():
+                    translated.append(translator.translate(current_batch.strip()))
+                current_batch = para + "\n"
+        
+        if current_batch.strip():
+            translated.append(translator.translate(current_batch.strip()))
+        
+        return "\n".join(translated)
     except Exception as e:
-        safe_print(f"PDF translation error: {e}")
+        print(f"PDF translation error: {e}")
         return text
 
 LANGUAGE_FONT_FAMILY = {
@@ -198,7 +162,7 @@ def _download_font(url: str, dest_path: str) -> None:
         with open(dest_path, "wb") as f:
             f.write(resp.content)
     except Exception as e:
-        safe_print(f"⚠️ Could not download font from {url}: {e}")
+        print(f"⚠️ Could not download font from {url}: {e}")
 
 def _ensure_register_font_family(family: str) -> str:
     """Ensure the Noto font family (Regular/Bold) is downloaded and registered. Returns the base family name to use."""
@@ -228,9 +192,9 @@ def _ensure_register_font_family(family: str) -> str:
             if os.path.exists(bold_file):
                 addMapping(family, 1, 0, f"{family}-Bold")
         except Exception as e:
-            safe_print(f"⚠️ addMapping failed for {family}: {e}")
+            print(f"⚠️ addMapping failed for {family}: {e}")
     except Exception as e:
-        safe_print(f"⚠️ Font registration failed for {family}: {e}")
+        print(f"⚠️ Font registration failed for {family}: {e}")
     return family
 
 def get_font_for_language(language: str) -> str:
@@ -264,7 +228,7 @@ def translate_text(text: str, target_language: str) -> str:
                     translated_paragraphs.append('')
             return '\n'.join(translated_paragraphs)
     except Exception as e:
-        safe_print(f"Translation error for {target_language}: {e}")
+        print(f"Translation error for {target_language}: {e}")
         return text
 
 class GraphState(TypedDict):
@@ -281,7 +245,6 @@ class GraphState(TypedDict):
     pdf_base64: str
     language: str
     pages: int
-    report_text: str
     
 
 groq_llm = ChatGroq(
@@ -311,7 +274,7 @@ def planner_agent(state: GraphState) -> Dict[str, Any]:
     
     num_subtopics = 1 + (2 * (pages - 2))
     
-    safe_print(f"Pages: {pages}")
+    print(f"📊 Pages: {pages}")
 
     prompt1 = f"Give a 2-3 word heading title for the topic '{topic}' in English. Return ONLY the title."
   
@@ -331,91 +294,56 @@ def planner_agent(state: GraphState) -> Dict[str, Any]:
         "subtopics": subtopics
     }
 
-from concurrent.futures import ThreadPoolExecutor
-
 def retriever_agent(state: GraphState) -> Dict[str, Any]:
     content = {}
-    subtopics = state.get("subtopics", [])
-    topic = state.get("topic", "")
+    language = state.get("language", "English")
     
-    def fetch_subtopic_content(sub):
+    for sub in state["subtopics"]:
         try:
-            search_query = f"{sub} {topic} latest 2025"
-            try:
-                search_results = search.run(search_query)
-                prompt = f"Based on this current information from the web: {search_results[:2000]}\n\nWrite a detailed, up-to-date informative paragraph about '{sub}' in the context of '{topic}' in English. Include recent developments and current statistics where relevant."
-            except Exception as e:
-                safe_print(f"Web search failed for '{sub}': {e}, trying Wikipedia...")
-                try:
-                    wiki_content = wiki_wrapper.run(f"{sub} {topic}")
-                    prompt = f"Based on this information: {wiki_content[:1500]}\n\nWrite a detailed informative paragraph about '{sub}' in the context of '{topic}' in English."
-                except:
-                    prompt = f"Write a detailed, up-to-date informative paragraph about '{sub}' in the context of '{topic}' in English. Focus on recent developments and current trends as of 2024-2025."
+            search_query = f"{sub} {state['topic']} latest 2025"
+            search_results = search.run(search_query)
             
-            response = groq_llm.invoke(prompt)
-            return sub, getattr(response, "content", f"Content for {sub}")
+            prompt = f"Based on this current information from the web: {search_results[:2000]}\n\nWrite a detailed, up-to-date informative paragraph about '{sub}' in the context of '{state['topic']}' in English. Include recent developments and current statistics where relevant."
         except Exception as e:
-            safe_print(f"Error fetching content for {sub}: {e}")
-            return sub, f"Information about {sub} in the context of {topic}."
-
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        results = list(executor.map(fetch_subtopic_content, subtopics))
-    
-    for sub, text in results:
-        content[sub] = text
+            print(f"Web search failed for '{sub}': {e}, trying Wikipedia...")
+            try:
+                wiki_content = wiki_wrapper.run(f"{sub} {state['topic']}")
+                prompt = f"Based on this information: {wiki_content[:1500]}\n\nWrite a detailed informative paragraph about '{sub}' in the context of '{state['topic']}' in English."
+            except:
+                prompt = f"Write a detailed, up-to-date informative paragraph about '{sub}' in the context of '{state['topic']}' in English. Focus on recent developments and current trends as of 2024-2025."
         
+        response = groq_llm.invoke(prompt)
+        content_text = getattr(response, "content", f"Content for {sub}")
+        content[sub] = content_text
     return {"content": content}
 
 def summarizer_agent(state: GraphState) -> Dict[str, Any]:
     summaries = {}
-    content_items = state.get("content", {}).items()
+    language = state.get("language", "English")
     
-    def summarize_subtopic(item):
-        sub, text = item
-        try:
-            prompt = f"Summarize this content about '{sub}' into a single coherent paragraph (no bullet points) in English: {text[:1500]}"
-            response = groq_llm.invoke(prompt)
-            return sub, getattr(response, "content", str(response))
-        except Exception as e:
-            safe_print(f"Error summarizing {sub}: {e}")
-            return sub, text[:300] + "..."
-
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        results = list(executor.map(summarize_subtopic, content_items))
-    
-    for sub, summary in results:
+    for sub, text in state["content"].items():
+        prompt = f"Summarize this content about '{sub}' into a single coherent paragraph (no bullet points) in English: {text[:1500]}"
+        response = groq_llm.invoke(prompt)
+        summary = getattr(response, "content", str(response))
         summaries[sub] = summary
-        
     return {"summaries": summaries}
 
 def analyzer_agent(state: GraphState) -> Dict[str, Any]:
     insights = {}
-    summary_items = state.get("summaries", {}).items()
+    language = state.get("language", "English")
     
-    def analyze_subtopic(item):
-        sub, summary = item
-        try:
-            prompt = f"List 3 key insights or takeaways from this text in English:\n{summary}"
-            response = groq_llm.invoke(prompt)
-            text = getattr(response, "content", str(response))
+    for sub, summary in state["summaries"].items():
+        prompt = f"List 3 key insights or takeaways from this text in English:\n{summary}"
+        response = groq_llm.invoke(prompt)
+        text = getattr(response, "content", str(response))
 
-            cleaned_lines = []
-            for l in text.split("\n"):
-                l = re.sub(r'(?i)here are.*insights.*', '', l)
-                if l.strip():
-                    line_clean = re.sub(r'^[-•*\d.\s]+', '', l).strip()
-                    cleaned_lines.append(f"- {line_clean}")
-            return sub, "\n".join(cleaned_lines).strip()
-        except Exception as e:
-            safe_print(f"Error analyzing {sub}: {e}")
-            return sub, "- Insight 1\n- Insight 2\n- Insight 3"
-
-    with ThreadPoolExecutor(max_workers=3) as executor:
-        results = list(executor.map(analyze_subtopic, summary_items))
-    
-    for sub, insight in results:
-        insights[sub] = insight
-        
+        cleaned_lines = []
+        for l in text.split("\n"):
+            l = re.sub(r'(?i)here are.*insights.*', '', l)
+            if l.strip():
+                line_clean = re.sub(r'^[-•*\d.\s]+', '', l).strip()
+                cleaned_lines.append(f"- {line_clean}")
+        insights[sub] = "\n".join(cleaned_lines).strip()
     return {"insights": insights}
 
 def clean_text(text: str) -> str:
@@ -548,120 +476,12 @@ def create_pdf_for_state(state: dict, target_lang: str) -> str:
     return base64.b64encode(pdf_data).decode("utf-8")
 
 
-def generate_report_text(state: dict, target_lang: str) -> str:
-    """Generate a plain text/markdown version of the report for editing."""
-    lines = []
-    
-    title_clean = re.sub(r'[#*:-]+', "", state.get("heading", "")).strip()
-    translated_title = translate_long_text(title_clean, target_lang)
-    final_title = translated_title if translated_title and translated_title.strip() else title_clean
-    lines.append(f"# {final_title}\n")
-
-    intro_label = translate_long_text("Introduction", target_lang)
-    intro_text = clean_text(state.get("intro", ""))
-    intro_text = translate_long_text(intro_text, target_lang)
-    lines.append(f"## {intro_label}\n{intro_text}\n")
-
-    for i, sub in enumerate(state.get("summaries", {}), 1):
-        sub_clean = re.sub(r'[#*•\-]+', "", sub).strip()
-        sub_translated = translate_long_text(sub_clean, target_lang)
-        
-        if sub_translated:
-            lines.append(f"## {i}. {sub_translated}\n")
-        
-        summary_text = clean_text(state["summaries"][sub])
-        summary_text = translate_long_text(summary_text, target_lang)
-        lines.append(f"{summary_text}\n")
-
-        if sub in state.get("insights", {}):
-            insights_label = translate_long_text("Insights", target_lang)
-            lines.append(f"### {insights_label}")
-            insights_text = state["insights"][sub]
-            for line in insights_text.split("\n"):
-                line = re.sub(r"(?i)here\s+are.*insights.*", "", line).strip()
-                line = clean_text(line)
-                if line:
-                    translated_line = translate_long_text(line, target_lang)
-                    lines.append(f"- {translated_line}")
-            lines.append("")
-
-    conclusion_label = translate_long_text("Conclusion", target_lang)
-    conclusion_text = clean_markdown(state.get("conclusion", "Conclusion not available."))
-    conclusion_text = translate_long_text(conclusion_text, target_lang)
-    lines.append(f"## {conclusion_label}\n{conclusion_text}")
-    
-    return "\n".join(lines)
-
-
-def create_pdf_from_text(text: str, target_lang: str) -> str:
-    """Generate PDF from a raw text (markdown-ish)."""
-    buffer = BytesIO()
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        rightMargin=20 * mm,
-        leftMargin=20 * mm,
-        topMargin=20 * mm,
-        bottomMargin=20 * mm,
-    )
-
-    styles = getSampleStyleSheet()
-    styleN = styles["Normal"]
-    title_style = styles["Title"]
-
-    unicode_font = get_font_for_language(target_lang)
-    
-    title_bold_style = ParagraphStyle(
-        "TitleBold", parent=title_style, fontName=unicode_font, fontSize=16
-    )
-    h2_style = ParagraphStyle(
-        "Heading2", parent=styles["Heading2"], fontName=unicode_font, fontSize=13, leading=15, spaceAfter=5, spaceBefore=10
-    )
-    h3_style = ParagraphStyle(
-        "Heading3", parent=styles["Heading3"], fontName=unicode_font, fontSize=11, leading=13, spaceAfter=4, spaceBefore=6
-    )
-    a_style = ParagraphStyle(
-        "Content", parent=styleN, fontName=unicode_font, fontSize=10, leading=13, spaceAfter=7
-    )
-
-    content = []
-    lines = text.split("\n")
-    
-    for line in lines:
-        line = line.strip()
-        if not line:
-            content.append(Spacer(1, 6))
-            continue
-        
-        if line.startswith("# "):
-            content.append(Paragraph(f"<b>{line[2:]}</b>", title_bold_style))
-            content.append(Spacer(1, 12))
-        elif line.startswith("## "):
-            content.append(Paragraph(f"<b>{line[3:]}</b>", h2_style))
-        elif line.startswith("### "):
-            content.append(Paragraph(f"<b>{line[4:]}</b>", h3_style))
-        elif line.startswith("- "):
-            content.append(Paragraph(line, a_style))
-        else:
-            content.append(Paragraph(line, a_style))
-
-    def add_page_number(canvas, doc):
-        page_num = canvas.getPageNumber()
-        canvas.drawRightString(200 * mm, 10 * mm, f"{page_num}")
-
-    doc.build(content, onFirstPage=add_page_number, onLaterPages=add_page_number)
-    pdf_data = buffer.getvalue()
-    buffer.close()
-    return base64.b64encode(pdf_data).decode("utf-8")
-
-
 def report_agent(state: dict) -> dict:
     """Generate PDF in memory (not saved to disk) and return Base64-encoded string."""
     
     english_pdf_base64 = create_pdf_for_state(state, "English")
     
     target_lang = state.get("language", "English")
-    report_text = generate_report_text(state, target_lang)
     
     if target_lang == "English":
         pdf_base64 = english_pdf_base64
@@ -670,8 +490,7 @@ def report_agent(state: dict) -> dict:
 
     return {
         "pdf_base64": pdf_base64,
-        "english_pdf_base64": english_pdf_base64,
-        "report_text": report_text
+        "english_pdf_base64": english_pdf_base64
     }
 
 
@@ -711,31 +530,6 @@ graph.add_edge("report_generator", END)
 
 app = graph.compile()
 
-def rewrite_text(text: str, language: str) -> str:
-    """Rewrite a portion of text using AI while preserving the target language."""
-    if not text.strip():
-        return text
-
-    prompt = (
-        f"You are a text editor. Rewrite the input text to be more professional or engaging in {language}. "
-        f"CRITICAL: The output MUST have EXACTLY {len(text.split())} words. "
-        f"DO NOT add any conversational filler, labels, or additional context. "
-        f"Return ONLY the rewritten words.\n\n"
-        f"Text: {text}"
-    )
-    
-    try:
-        response = groq_llm.invoke(prompt)
-        rewritten = getattr(response, "content", str(response)).strip()
-        # Remove common AI prefix hallucinations
-        rewritten = re.sub(r'^(Rewritten|Output|Result|Here is your text):\s*', '', rewritten, flags=re.IGNORECASE)
-        rewritten = rewritten.strip(' "')
-        return rewritten
-    except Exception as e:
-        safe_print(f"Error in rewrite_text: {e}")
-        return text
-
-
 if __name__ == "__main__":
     topic = input("Enter research topic: ").strip()
     final_state = None
@@ -747,6 +541,6 @@ if __name__ == "__main__":
 
     if final_state and "report_generator" in final_state:
         pdf_path = final_state["report_generator"].get("pdf_path")
-        print(f"Report generated successfully: {pdf_path}")
+        print(f"\n✅ Report generated successfully: {pdf_path}")
     else:
-        print("Something went wrong: report not generated.")
+        print("⚠️ Something went wrong: report not generated.")
