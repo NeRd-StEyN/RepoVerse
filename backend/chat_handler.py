@@ -5,11 +5,12 @@ import gc
 from dotenv import load_dotenv
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_community.vectorstores import FAISS
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 from deep_translator import GoogleTranslator
 
+# NOTE: HuggingFaceEmbeddings and FAISS are imported lazily inside
+# get_embedding_model() / the functions that need them, so that
+# sentence-transformers does NOT download a model during gunicorn boot.
 
 load_dotenv()
 groq_api_key = os.getenv("GROQ_API_KEY")
@@ -26,6 +27,7 @@ def get_embedding_model():
     """Lazy-load embeddings so app startup is resilient to transient network issues."""
     global embedding_model
     if embedding_model is None:
+        from langchain_huggingface import HuggingFaceEmbeddings
         embedding_model = HuggingFaceEmbeddings(
             model_name=embedding_model_name,
             model_kwargs={"device": "cpu"},
@@ -68,6 +70,7 @@ def init_chat_from_base64(session_id: str, pdf_base64: str):
 
         current_embedding_model = get_embedding_model()
 
+        from langchain_community.vectorstores import FAISS
         temp_path = f"/tmp/vectorstore_{session_id}"
         vectorstore = FAISS.from_documents(chunks, current_embedding_model)
         vectorstore.save_local(temp_path)
@@ -109,6 +112,7 @@ def chat_with_pdf(session_id: str, message: str):
         except:
             user_message_en = message  
 
+        from langchain_community.vectorstores import FAISS
         current_embedding_model = get_embedding_model()
         vectorstore = FAISS.load_local(
             temp_path, current_embedding_model, allow_dangerous_deserialization=True

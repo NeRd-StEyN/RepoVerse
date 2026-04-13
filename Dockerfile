@@ -40,4 +40,4 @@ ENV PORT=7860
 EXPOSE 7860
 
 # Start backend
-CMD ["gunicorn", "--bind", "0.0.0.0:7860", "--timeout", "120", "--workers", "1", "server:server"]
+CMD ["gunicorn", "--bind", "0.0.0.0:7860", "--timeout", "300", "--graceful-timeout", "120", "--workers", "1", "--preload", "server:server"]
