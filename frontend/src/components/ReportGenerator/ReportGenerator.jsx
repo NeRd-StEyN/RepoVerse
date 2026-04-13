@@ -43,7 +43,7 @@ const ReportGenerator = ({
 
     try {
       console.log("Starting report generation:", { localTopic, language, pageCount });
-      const res = await fetch("/api/generate_report", {
+      const res = await fetch("/generate_report", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -80,7 +80,7 @@ const ReportGenerator = ({
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/progress/${encodeURIComponent(cacheKey)}`);
+        const res = await fetch(`/progress/${encodeURIComponent(cacheKey)}`);
         if (!res.ok) throw new Error("Failed to fetch progress");
 
         const data = await res.json();
@@ -91,7 +91,7 @@ const ReportGenerator = ({
           clearInterval(interval);
           console.log("🎯 Report complete, fetching PDF...");
 
-          const pdfRes = await fetch(`/api/report/${encodeURIComponent(cacheKey)}`);
+          const pdfRes = await fetch(`/report/${encodeURIComponent(cacheKey)}`);
           if (!pdfRes.ok) throw new Error("Failed to fetch report PDF");
 
           const pdfData = await pdfRes.json();

@@ -10,17 +10,17 @@ const ProgressTracker = ({ topic, progress = {}, isGenerating = false }) => {
 
     const pollProgress = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/progress/${encodeURIComponent(topic)}`);
+        const response = await fetch(`/progress/${encodeURIComponent(topic)}`);
         const data = await response.json();
-        
+
         if (data.error) {
           setError(data.error);
           return;
         }
-        
+
         setCurrentProgress(data.progress);
-        
-        
+
+
         if (data.status === "completed" || data.status === "failed") {
           return;
         }
@@ -30,7 +30,7 @@ const ProgressTracker = ({ topic, progress = {}, isGenerating = false }) => {
       }
     };
 
-    
+
     const interval = setInterval(pollProgress, 2000);
     return () => clearInterval(interval);
   }, [topic, isGenerating]);
@@ -51,7 +51,7 @@ const ProgressTracker = ({ topic, progress = {}, isGenerating = false }) => {
       <div className="progress-stages">
         {stages.map((stage, index) => {
           const isCompleted = progress[stage.key];
-          
+
           const isCurrent =
             isGenerating && index === currentStageIndex && !allCompleted;
           const isUpcoming =
@@ -68,13 +68,12 @@ const ProgressTracker = ({ topic, progress = {}, isGenerating = false }) => {
             >
               <div className="stage-indicator">
                 <div
-                  className={`indicator-circle ${
-                    isCompleted
+                  className={`indicator-circle ${isCompleted
                       ? "completed"
                       : isCurrent
-                      ? "in-progress"
-                      : "pending"
-                  }`}
+                        ? "in-progress"
+                        : "pending"
+                    }`}
                 >
                   {isCompleted ? "✓" : isCurrent ? "⟳" : index + 1}
                 </div>
