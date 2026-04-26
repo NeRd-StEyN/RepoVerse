@@ -172,6 +172,9 @@ iframe[type="application/pdf"] {
   padding: 1rem;
   background: rgba(0, 0, 0, 0.2);
   border-top: 1px solid #333;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 0.75rem;
 }
 
 .download-btn,
@@ -186,6 +189,54 @@ iframe[type="application/pdf"] {
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
   font-size: 0.95rem;
+}
+
+.download-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.editor-panel {
+  margin: 0 1rem 1rem;
+  padding: 1rem;
+  border: 1px solid #2f3d4d;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.editor-label {
+  display: block;
+  margin-bottom: 0.6rem;
+  color: #d7e6ff;
+  font-size: 0.95rem;
+}
+
+.editor-textarea {
+  width: 100%;
+  min-height: 170px;
+  resize: vertical;
+  border-radius: 10px;
+  border: 1px solid #38506a;
+  padding: 0.75rem;
+  color: #f4f8ff;
+  background: #0d1520;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.editor-textarea:focus {
+  outline: none;
+  border-color: #3f8cff;
+  box-shadow: 0 0 0 2px rgba(63, 140, 255, 0.2);
+}
+
+.rewrite-error {
+  color: #ff9b9b;
+  margin: 0 1rem 1rem;
+  text-align: left;
+  font-size: 0.9rem;
 }
 
  
@@ -359,29 +410,38 @@ iframe[type="application/pdf"] {
 
 .pdf-actions {
   text-align: center;
-  padding: 1rem;
-  background: rgba(0, 0, 0, 0.2);
-  border-top: 1px solid #333;
+  padding: 1.15rem 1rem;
+  background: transparent;
+  border-top: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
 }
 
 .download-btn,
 .open-mobile-btn {
-  background: linear-gradient(135deg, #007bff, #0056b3);
+  width: auto;
+  min-width: 200px;
+  padding: 11px 22px;
+  background: linear-gradient(135deg, #1f8bff, #0d5fca 58%, #0a4fa9);
   color: white;
-  font-weight: 600;
-  padding: 10px 20px;
-  border: none;
-  border-radius: 8px;
+  font-weight: 700;
+  border: 1px solid rgba(129, 191, 255, 0.45);
+  border-radius: 999px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-  font-size: 0.95rem;
+  letter-spacing: 0.2px;
+  transition: transform 0.2s ease, box-shadow 0.25s ease, filter 0.25s ease;
+  box-shadow: 0 10px 26px rgba(11, 103, 219, 0.34);
+  font-size: 0.94rem;
 }
 
 .download-btn:hover,
 .open-mobile-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px rgba(0, 123, 255, 0.4);
+  transform: translateY(-1px);
+  filter: saturate(1.1);
+  box-shadow: 0 14px 30px rgba(11, 103, 219, 0.42);
 }
 
 .mobile-pdf-notice {
@@ -399,5 +459,15 @@ iframe[type="application/pdf"] {
     min-height: 500px;
     flex: none;
     width: 100%;
+  }
+
+  .pdf-actions {
+    width: 100%;
+  }
+
+  .download-btn,
+  .open-mobile-btn {
+    width: 100%;
+    min-width: 0;
   }
 }

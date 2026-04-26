@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import "./ReportDisplay.css";
-import PdfViewer from "./PdfViewer";
 
 export const ReportDisplay = ({ topic, pdfUrl, isGenerating }) => {
   const [pdfBlobUrl, setPdfBlobUrl] = useState("");
@@ -86,9 +85,6 @@ export const ReportDisplay = ({ topic, pdfUrl, isGenerating }) => {
         { }
         {!isGenerating && pdfBlobUrl && (
           <>
-            <PdfViewer pdfData={pdfUrl} />
-
-            { }
             <div className="pdf-actions">
               <button className="download-btn" onClick={openPdfInNewTab}>
                 Open in New Tab
