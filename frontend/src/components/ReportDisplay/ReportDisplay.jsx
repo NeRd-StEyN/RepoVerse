@@ -1,15 +1,17 @@
 import React, { useEffect, useState } from "react";
 import "./ReportDisplay.css";
+import PdfViewer from "./PdfViewer";
 
 export const ReportDisplay = ({ topic, pdfUrl, isGenerating }) => {
   const [pdfBlobUrl, setPdfBlobUrl] = useState("");
-  const [isMobile, setIsMobile] = useState(false);
 
 
-  useEffect(() => {
-    const checkMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    setIsMobile(checkMobile);
-  }, []);
+  const normalizeBase64 = (value) => {
+    return value
+      .replace(/\s+/g, "")
+      .replace(/-/g, "+")
+      .replace(/_/g, "/");
+  };
 
 
   useEffect(() => {
@@ -23,7 +25,9 @@ export const ReportDisplay = ({ topic, pdfUrl, isGenerating }) => {
 
       try {
         // Strip data prefix if present and convert base64 to blob
-        const base64Data = pdfUrl.replace(/^data:application\/pdf;base64,/, "");
+        const base64Data = normalizeBase64(
+          pdfUrl.replace(/^data:application\/pdf;base64,/, "")
+        );
         const byteCharacters = atob(base64Data);
         const byteNumbers = Array.from(byteCharacters, (c) => c.charCodeAt(0));
         const byteArray = new Uint8Array(byteNumbers);
@@ -38,27 +42,6 @@ export const ReportDisplay = ({ topic, pdfUrl, isGenerating }) => {
       setPdfBlobUrl("");
     }
   }, [pdfUrl]);
-
-
-  const handleIframeLoad = (e) => {
-    try {
-      const iframe = e.target;
-      iframe.blur();
-      preventAutoScroll();
-      if (iframe.contentWindow) {
-        iframe.contentWindow.postMessage(
-          {
-            type: "pdf-viewer-command",
-            command: "zoom",
-            value: "100",
-          },
-          "*"
-        );
-      }
-    } catch (err) {
-      console.log("PDF viewer settings not accessible:", err);
-    }
-  };
 
 
   const openPdfInNewTab = () => {
@@ -103,36 +86,13 @@ export const ReportDisplay = ({ topic, pdfUrl, isGenerating }) => {
         { }
         {!isGenerating && pdfBlobUrl && (
           <>
-            {!isMobile ? (
-
-              <iframe
-                tabIndex="-1"
-                src={`${pdfBlobUrl}#zoom=100&view=FitH`}
-                title={`${topic || "AI"} Report`}
-                style={{
-                  border: "none",
-                  display: "block",
-                  width: "100%",
-                  height: "calc(100vh - 140px)",
-                  backgroundColor: "white",
-                }}
-                onLoad={handleIframeLoad}
-              />
-            ) : (
-
-              <div className="mobile-pdf-notice">
-                <p>📱 PDF preview not supported on mobile.</p>
-                <button
-                  onClick={openPdfInNewTab}
-                  className="open-mobile-btn"
-                >
-                  Open PDF in New Tab
-                </button>
-              </div>
-            )}
+            <PdfViewer pdfData={pdfUrl} />
 
             { }
             <div className="pdf-actions">
+              <button className="download-btn" onClick={openPdfInNewTab}>
+                Open in New Tab
+              </button>
               <button className="download-btn" onClick={handleDownload}>
                 ⬇️ Download PDF
               </button>
