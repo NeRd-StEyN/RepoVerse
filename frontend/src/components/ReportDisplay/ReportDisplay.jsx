@@ -5,18 +5,24 @@ export const ReportDisplay = ({ topic, pdfUrl, isGenerating }) => {
   const [pdfBlobUrl, setPdfBlobUrl] = useState("");
   const [isMobile, setIsMobile] = useState(false);
 
-  
+
   useEffect(() => {
     const checkMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     setIsMobile(checkMobile);
   }, []);
 
-  
+
   useEffect(() => {
-    if (pdfUrl && !pdfUrl.startsWith("data:application/pdf")) {
+    if (pdfUrl) {
       preventAutoScroll();
+
+      if (pdfUrl.startsWith("blob:") || pdfUrl.startsWith("http")) {
+        setPdfBlobUrl(pdfUrl);
+        return;
+      }
+
       try {
-        
+        // Strip data prefix if present and convert base64 to blob
         const base64Data = pdfUrl.replace(/^data:application\/pdf;base64,/, "");
         const byteCharacters = atob(base64Data);
         const byteNumbers = Array.from(byteCharacters, (c) => c.charCodeAt(0));
@@ -24,22 +30,20 @@ export const ReportDisplay = ({ topic, pdfUrl, isGenerating }) => {
         const blob = new Blob([byteArray], { type: "application/pdf" });
         const blobUrl = URL.createObjectURL(blob);
         setPdfBlobUrl(blobUrl);
-
       } catch (err) {
         console.error("Error converting PDF base64:", err);
-        setPdfBlobUrl("");
+        setPdfBlobUrl(pdfUrl);
       }
     } else {
-      
-      setPdfBlobUrl(pdfUrl);
+      setPdfBlobUrl("");
     }
   }, [pdfUrl]);
 
-  
+
   const handleIframeLoad = (e) => {
     try {
       const iframe = e.target;
-      iframe.blur(); 
+      iframe.blur();
       preventAutoScroll();
       if (iframe.contentWindow) {
         iframe.contentWindow.postMessage(
@@ -56,14 +60,14 @@ export const ReportDisplay = ({ topic, pdfUrl, isGenerating }) => {
     }
   };
 
-  
+
   const openPdfInNewTab = () => {
     if (pdfBlobUrl) {
       window.open(pdfBlobUrl, "_blank");
     }
   };
 
-  
+
   const handleDownload = () => {
     if (!pdfBlobUrl) return;
     const link = document.createElement("a");
@@ -74,9 +78,9 @@ export const ReportDisplay = ({ topic, pdfUrl, isGenerating }) => {
     document.body.removeChild(link);
   };
   const preventAutoScroll = () => {
-  
-  window.scrollTo({ top: 0, behavior: "instant" });
-};
+
+    window.scrollTo({ top: 0, behavior: "instant" });
+  };
 
 
 
@@ -100,7 +104,7 @@ export const ReportDisplay = ({ topic, pdfUrl, isGenerating }) => {
         {!isGenerating && pdfBlobUrl && (
           <>
             {!isMobile ? (
-              
+
               <iframe
                 tabIndex="-1"
                 src={`${pdfBlobUrl}#zoom=100&view=FitH`}
@@ -109,13 +113,13 @@ export const ReportDisplay = ({ topic, pdfUrl, isGenerating }) => {
                   border: "none",
                   display: "block",
                   width: "100%",
-                  height: "calc(100vh - 140px)", 
+                  height: "calc(100vh - 140px)",
                   backgroundColor: "white",
                 }}
                 onLoad={handleIframeLoad}
               />
             ) : (
-              
+
               <div className="mobile-pdf-notice">
                 <p>📱 PDF preview not supported on mobile.</p>
                 <button
