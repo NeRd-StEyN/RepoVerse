@@ -25,16 +25,24 @@ _wiki_wrapper = None
 def get_wiki_wrapper():
     global _wiki_wrapper
     if _wiki_wrapper is None:
-        from langchain_community.utilities import WikipediaAPIWrapper
-        _wiki_wrapper = WikipediaAPIWrapper()
+        try:
+            from langchain_community.utilities import WikipediaAPIWrapper
+            _wiki_wrapper = WikipediaAPIWrapper()
+        except Exception as e:
+            print(f"[WARNING] Wikipedia wrapper failed to initialize: {e}")
+            _wiki_wrapper = None
     return _wiki_wrapper
 
 _search = None
 def get_search():
     global _search
     if _search is None:
-        from langchain_community.tools import DuckDuckGoSearchRun
-        _search = DuckDuckGoSearchRun()
+        try:
+            from langchain_community.tools import DuckDuckGoSearchRun
+            _search = DuckDuckGoSearchRun()
+        except Exception as e:
+            print(f"[WARNING] DuckDuckGo search tool failed to initialize: {e}")
+            _search = None
     return _search
 
 
@@ -315,6 +323,8 @@ def retriever_agent(state: GraphState) -> Dict[str, Any]:
     groq_llm = get_groq_llm()
     for sub in state["subtopics"]:
         try:
+            if not search:
+                raise ValueError("DuckDuckGo search tool is not initialized.")
             search_query = f"{sub} {state['topic']} latest 2025"
             search_results = search.run(search_query)
             
@@ -322,9 +332,12 @@ def retriever_agent(state: GraphState) -> Dict[str, Any]:
         except Exception as e:
             print(f"Web search failed for '{sub}': {e}, trying Wikipedia...")
             try:
+                if not wiki_wrapper:
+                    raise ValueError("Wikipedia wrapper tool is not initialized.")
                 wiki_content = wiki_wrapper.run(f"{sub} {state['topic']}")
                 prompt = f"Based on this information: {wiki_content[:1500]}\n\nWrite a detailed informative paragraph about '{sub}' in the context of '{state['topic']}' in English."
-            except:
+            except Exception as wiki_err:
+                print(f"Wikipedia search failed: {wiki_err}, falling back to LLM knowledge...")
                 prompt = f"Write a detailed, up-to-date informative paragraph about '{sub}' in the context of '{state['topic']}' in English. Focus on recent developments and current trends as of 2024-2025."
         
         response = groq_llm.invoke(prompt)
