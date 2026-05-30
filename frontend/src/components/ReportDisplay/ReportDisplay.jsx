@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import PdfViewer from "./PdfViewer";
 import "./ReportDisplay.css";
 
 export const ReportDisplay = ({
@@ -287,7 +288,7 @@ export const ReportDisplay = ({
           <>
             {activeTab === "preview" && (
               <div className="pdf-preview-container">
-                <iframe src={pdfBlobUrl} title="Report PDF Preview"></iframe>
+                <PdfViewer pdfData={pdfUrl} />
                 <div className="pdf-actions">
                   <button className="download-btn" onClick={openPdfInNewTab}>
                     Open in New Tab
