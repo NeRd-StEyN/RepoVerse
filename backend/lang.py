@@ -1,32 +1,42 @@
 from typing import List, Dict, Any, TypedDict
-from langgraph.graph import StateGraph, START, END
-from langchain_groq import ChatGroq
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, PageBreak
-from reportlab.lib.units import mm
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.lib.fonts import addMapping
-from wordcloud import WordCloud
-import matplotlib.pyplot as plt
 import os, re
 import requests
-from datetime import datetime
-import numpy as np
-from random import choice
-from langchain_community.utilities import WikipediaAPIWrapper
-from langchain_community.tools import DuckDuckGoSearchRun
 from io import BytesIO
 import base64
 from dotenv import load_dotenv
-from deep_translator import GoogleTranslator
 
 load_dotenv()
 
 groq_api_key = os.getenv("GROQ_API_KEY")
-wiki_wrapper = WikipediaAPIWrapper()
-search = DuckDuckGoSearchRun()
+
+_groq_llm = None
+def get_groq_llm():
+    global _groq_llm
+    if _groq_llm is None:
+        from langchain_groq import ChatGroq
+        _groq_llm = ChatGroq(
+            api_key=groq_api_key,
+            temperature=0.7,
+            model_name="llama-3.1-8b-instant"
+        )
+    return _groq_llm
+
+_wiki_wrapper = None
+def get_wiki_wrapper():
+    global _wiki_wrapper
+    if _wiki_wrapper is None:
+        from langchain_community.utilities import WikipediaAPIWrapper
+        _wiki_wrapper = WikipediaAPIWrapper()
+    return _wiki_wrapper
+
+_search = None
+def get_search():
+    global _search
+    if _search is None:
+        from langchain_community.tools import DuckDuckGoSearchRun
+        _search = DuckDuckGoSearchRun()
+    return _search
+
 
 
 LANGUAGE_CODES = {
@@ -54,6 +64,7 @@ def translate_long_text(text: str, target_language: str, max_chunk: int = 4500) 
         if lang_code == "en":
             return text
         
+        from deep_translator import GoogleTranslator
         translator = GoogleTranslator(source='en', target=lang_code)
         
  
@@ -162,10 +173,14 @@ def _download_font(url: str, dest_path: str) -> None:
         with open(dest_path, "wb") as f:
             f.write(resp.content)
     except Exception as e:
-        print(f"⚠️ Could not download font from {url}: {e}")
+        print(f"[WARNING] Could not download font from {url}: {e}")
 
 def _ensure_register_font_family(family: str) -> str:
     """Ensure the Noto font family (Regular/Bold) is downloaded and registered. Returns the base family name to use."""
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+    from reportlab.lib.fonts import addMapping
+
     urls = NOTO_URLS.get(family)
     if not urls:
         return family
@@ -192,9 +207,9 @@ def _ensure_register_font_family(family: str) -> str:
             if os.path.exists(bold_file):
                 addMapping(family, 1, 0, f"{family}-Bold")
         except Exception as e:
-            print(f"⚠️ addMapping failed for {family}: {e}")
+            print(f"[WARNING] addMapping failed for {family}: {e}")
     except Exception as e:
-        print(f"⚠️ Font registration failed for {family}: {e}")
+        print(f"[WARNING] Font registration failed for {family}: {e}")
     return family
 
 def get_font_for_language(language: str) -> str:
@@ -213,6 +228,7 @@ def translate_text(text: str, target_language: str) -> str:
         if lang_code == "en":
             return text
         
+        from deep_translator import GoogleTranslator
         max_chunk_size = 4500
         if len(text) <= max_chunk_size:
             translator = GoogleTranslator(source='en', target=lang_code)
@@ -247,16 +263,11 @@ class GraphState(TypedDict):
     pages: int
     
 
-groq_llm = ChatGroq(
-    api_key=groq_api_key,
-    temperature=0.7,
-    model_name="llama-3.1-8b-instant"
-)
-
 def intro_agent(state: GraphState) -> Dict[str, Any]:
     """Generate a longer introduction about the main topic."""
     language = state.get("language", "English")
     
+    groq_llm = get_groq_llm()
     prompt1 = f"Give a 2-3 word heading title for the topic '{state['topic']}' in English. If the topic is already of 1-4 words just give same title. Return ONLY the title."
     response_heading = groq_llm.invoke(prompt1)     
     heading = getattr(response_heading, "content", str(response_heading)).strip()
@@ -274,10 +285,11 @@ def planner_agent(state: GraphState) -> Dict[str, Any]:
     
     num_subtopics = 1 + (2 * (pages - 2))
     
-    print(f"📊 Pages: {pages}")
+    print(f"[INFO] Pages: {pages}")
 
     prompt1 = f"Give a 2-3 word heading title for the topic '{topic}' in English. Return ONLY the title."
   
+    groq_llm = get_groq_llm()
     response_heading = groq_llm.invoke(prompt1)
     
     heading = getattr(response_heading, "content", str(response_heading)).strip()
@@ -298,6 +310,9 @@ def retriever_agent(state: GraphState) -> Dict[str, Any]:
     content = {}
     language = state.get("language", "English")
     
+    search = get_search()
+    wiki_wrapper = get_wiki_wrapper()
+    groq_llm = get_groq_llm()
     for sub in state["subtopics"]:
         try:
             search_query = f"{sub} {state['topic']} latest 2025"
@@ -321,6 +336,7 @@ def summarizer_agent(state: GraphState) -> Dict[str, Any]:
     summaries = {}
     language = state.get("language", "English")
     
+    groq_llm = get_groq_llm()
     for sub, text in state["content"].items():
         prompt = f"Summarize this content about '{sub}' into a single coherent paragraph (no bullet points) in English: {text[:1500]}"
         response = groq_llm.invoke(prompt)
@@ -332,6 +348,7 @@ def analyzer_agent(state: GraphState) -> Dict[str, Any]:
     insights = {}
     language = state.get("language", "English")
     
+    groq_llm = get_groq_llm()
     for sub, summary in state["summaries"].items():
         prompt = f"List 3 key insights or takeaways from this text in English:\n{summary}"
         response = groq_llm.invoke(prompt)
@@ -359,6 +376,13 @@ def clean_markdown(text: str) -> str:
 
 def create_pdf_for_state(state: dict, target_lang: str) -> str:
     """Helper to generate PDF Base64 for a specific language."""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image, PageBreak
+    from reportlab.lib.units import mm
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+
     buffer = BytesIO()
 
     doc = SimpleDocTemplate(
@@ -505,42 +529,54 @@ def conclusion_agent(state: GraphState) -> Dict[str, Any]:
         f"Summarize the key insights and future outlook for the topic '{state['topic']}'.\n"
         f"Here is the context:\n{combined_text[:2000]}"
     )
+    groq_llm = get_groq_llm()
     response = groq_llm.invoke(prompt)
     conclusion_text = getattr(response, "content", str(response))
     
     return {"conclusion": conclusion_text}
 
-graph = StateGraph(GraphState)
-graph.add_node("intro", intro_agent)
-graph.add_node("planner", planner_agent)
-graph.add_node("retriever", retriever_agent)
-graph.add_node("summarizer", summarizer_agent)
-graph.add_node("analyzer", analyzer_agent)
-graph.add_node("report_generator", report_agent)
-graph.add_node("conclusion", conclusion_agent)
+_compiled_app = None
 
-graph.add_edge(START, "intro")
-graph.add_edge("intro", "planner")
-graph.add_edge("planner", "retriever")
-graph.add_edge("retriever", "summarizer")
-graph.add_edge("summarizer", "analyzer")
-graph.add_edge("analyzer", "conclusion")
-graph.add_edge("conclusion", "report_generator")
-graph.add_edge("report_generator", END)
+def get_compiled_app():
+    global _compiled_app
+    if _compiled_app is None:
+        from langgraph.graph import StateGraph, START, END
+        graph = StateGraph(GraphState)
+        graph.add_node("intro", intro_agent)
+        graph.add_node("planner", planner_agent)
+        graph.add_node("retriever", retriever_agent)
+        graph.add_node("summarizer", summarizer_agent)
+        graph.add_node("analyzer", analyzer_agent)
+        graph.add_node("report_generator", report_agent)
+        graph.add_node("conclusion", conclusion_agent)
 
-app = graph.compile()
+        graph.add_edge(START, "intro")
+        graph.add_edge("intro", "planner")
+        graph.add_edge("planner", "retriever")
+        graph.add_edge("retriever", "summarizer")
+        graph.add_edge("summarizer", "analyzer")
+        graph.add_edge("analyzer", "conclusion")
+        graph.add_edge("conclusion", "report_generator")
+        graph.add_edge("report_generator", END)
+
+        _compiled_app = graph.compile()
+    return _compiled_app
+
+# Keep compatibility with anyone importing 'app' directly
+app = None
 
 if __name__ == "__main__":
     topic = input("Enter research topic: ").strip()
     final_state = None
+    compiled_app = get_compiled_app()
 
-    for state in app.stream({"topic": topic}):
+    for state in compiled_app.stream({"topic": topic}):
         final_state = state
         if "report_generator" in state:
-            print("\n📄 Report generation in progress...")
+            print("\n[INFO] Report generation in progress...")
 
     if final_state and "report_generator" in final_state:
         pdf_path = final_state["report_generator"].get("pdf_path")
-        print(f"\n✅ Report generated successfully: {pdf_path}")
+        print(f"\n[SUCCESS] Report generated successfully: {pdf_path}")
     else:
-        print("⚠️ Something went wrong: report not generated.")
+        print("[WARNING] Something went wrong: report not generated.")

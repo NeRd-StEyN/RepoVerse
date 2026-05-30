@@ -3,10 +3,6 @@ import base64
 import tempfile
 import gc
 from dotenv import load_dotenv
-from langchain_community.document_loaders import PyPDFLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_groq import ChatGroq
-from deep_translator import GoogleTranslator
 
 # NOTE: HuggingFaceEmbeddings and FAISS are imported lazily inside
 # get_embedding_model() / the functions that need them, so that
@@ -42,6 +38,8 @@ chat_sessions = {}
 
 def init_chat_from_base64(session_id: str, pdf_base64: str):
     """Initialize chat session using Base64 PDF (Render memory safe)."""
+    from langchain_community.document_loaders import PyPDFLoader
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
     temp_file_path = None
     try:
        
@@ -71,7 +69,7 @@ def init_chat_from_base64(session_id: str, pdf_base64: str):
         current_embedding_model = get_embedding_model()
 
         from langchain_community.vectorstores import FAISS
-        temp_path = f"/tmp/vectorstore_{session_id}"
+        temp_path = os.path.join(tempfile.gettempdir(), f"vectorstore_{session_id}")
         vectorstore = FAISS.from_documents(chunks, current_embedding_model)
         vectorstore.save_local(temp_path)
 
@@ -98,6 +96,8 @@ def init_chat_from_base64(session_id: str, pdf_base64: str):
 
 def chat_with_pdf(session_id: str, message: str):
     """Chat with initialized PDF session (Render-safe)."""
+    from deep_translator import GoogleTranslator
+    from langchain_groq import ChatGroq
     try:
         if session_id not in chat_sessions:
             return {"error": f"No chat session found for '{session_id}'."}

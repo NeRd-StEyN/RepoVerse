@@ -1,4 +1,4 @@
-from lang import app
+from lang import get_compiled_app
 import os
 import sys
 
@@ -14,6 +14,7 @@ try:
     language = "English"
     pages = 3
     
+    app = get_compiled_app()
     for state in app.stream({"topic": topic, "language": language, "pages": pages}):
         safe_print(f"Step completed: {list(state.keys())}")
         if "report_generator" in state:

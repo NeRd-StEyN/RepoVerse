@@ -127,6 +127,7 @@ const ReportGenerator = ({
   ];
 
   return (
+    <>
     <div className="report-generator">
       <h2>Generate New Report</h2>
       <p className="description">
@@ -214,15 +215,15 @@ const ReportGenerator = ({
           ))}
         </div>
       </div>
-
-      { }
-      <div className="tracker-container">
-        <ProgressTracker progress={progress} isGenerating={isGenerating} />
-      </div>
-
-      { }
+      {/* Error Message */}
       {error && <p className="error-message">{error}</p>}
     </div>
+
+    {/* 4️⃣ Minimalist Floating Progress Tracker */}
+    <div className="tracker-container">
+      <ProgressTracker progress={progress} isGenerating={isGenerating} />
+    </div>
+    </>
   );
 };
 

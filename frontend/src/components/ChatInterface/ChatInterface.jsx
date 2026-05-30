@@ -7,11 +7,15 @@ const ChatInterface = ({ pdfUrl, topic }) => {
   const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [sessionId, setSessionId] = useState(null);
-  const messagesEndRef = useRef(null);
-
+  const chatContainerRef = useRef(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: "smooth"
+      });
+    }
   };
   useEffect(() => scrollToBottom(), [messages]);
 
@@ -144,7 +148,7 @@ const ChatInterface = ({ pdfUrl, topic }) => {
 
   return (
     <div className="chat-interface">
-      <div className="chat-messages">
+      <div className="chat-messages" ref={chatContainerRef}>
         {messages.map((message, index) => {
           const dir = getTextDirection(message.content);
           return (
@@ -165,7 +169,6 @@ const ChatInterface = ({ pdfUrl, topic }) => {
             </div>
           </div>
         )}
-        <div ref={messagesEndRef} />
       </div>
 
       <form onSubmit={handleSubmit} className="chat-input">
