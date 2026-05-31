@@ -32,6 +32,7 @@ html {
   gap: 24px;
   height: 100%;
   min-height: 0;
+  min-width: 0;
 }
 
 @media (max-width: 1024px) {

@@ -287,16 +287,8 @@ export const ReportDisplay = ({
         {!isGenerating && pdfBlobUrl && (
           <>
             {activeTab === "preview" && (
-              <div className="pdf-preview-container">
-                <PdfViewer pdfData={pdfUrl} />
-                <div className="pdf-actions">
-                  <button className="download-btn" onClick={openPdfInNewTab}>
-                    Open in New Tab
-                  </button>
-                  <button className="download-btn" onClick={handleDownload}>
-                    ⬇️ Download PDF
-                  </button>
-                </div>
+              <div className="pdf-preview-container" style={{ flex: 1, minHeight: 0 }}>
+                <PdfViewer pdfData={pdfUrl} topic={topic} />
               </div>
             )}
 
