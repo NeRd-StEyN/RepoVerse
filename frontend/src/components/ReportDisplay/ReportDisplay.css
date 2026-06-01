@@ -488,6 +488,20 @@
   z-index: 100;
   user-select: none;
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  overflow-x: auto;
+}
+
+.chrome-pdf-toolbar::-webkit-scrollbar {
+  height: 4px;
+}
+
+.chrome-pdf-toolbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chrome-pdf-toolbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
 }
 
 .chrome-pdf-toolbar .toolbar-left,
@@ -496,11 +510,11 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
 }
 
 .chrome-pdf-toolbar .toolbar-left {
-  flex: 1;
-  min-width: 0;
+  flex: 1 0 auto;
 }
 
 .chrome-pdf-toolbar .toolbar-center {
@@ -509,7 +523,7 @@
 }
 
 .chrome-pdf-toolbar .toolbar-right {
-  flex: 1;
+  flex: 1 0 auto;
   justify-content: flex-end;
 }
 
