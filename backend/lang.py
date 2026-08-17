@@ -17,7 +17,8 @@ def get_groq_llm():
         _groq_llm = ChatGroq(
             api_key=groq_api_key,
             temperature=0.7,
-            model_name="llama-3.1-8b-instant"
+            model_name="llama-3.1-8b-instant",
+            request_timeout=60,
         )
     return _groq_llm
 
@@ -272,47 +273,77 @@ class GraphState(TypedDict):
     
 
 def intro_agent(state: GraphState) -> Dict[str, Any]:
-    """Generate a longer introduction about the main topic."""
-    language = state.get("language", "English")
-    
+    """Generate a heading and introduction about the main topic in a single LLM call."""
+    topic = state["topic"]
     groq_llm = get_groq_llm()
-    prompt1 = f"Give a 2-3 word heading title for the topic '{state['topic']}' in English. If the topic is already of 1-4 words just give same title. Return ONLY the title."
-    response_heading = groq_llm.invoke(prompt1)     
-    heading = getattr(response_heading, "content", str(response_heading)).strip()
-    
-    prompt = f"Write a comprehensive introduction (about 200-250 words) about the topic '{heading}' in English. Include background context, significance, and what will be covered."
-    response = groq_llm.invoke(prompt)
-    intro_text = getattr(response, "content", str(response))
-    
-    return {"intro": intro_text}
+
+    combined_prompt = (
+        f"You are a research assistant. For the topic '{topic}', do TWO things:\n"
+        f"1. On the very first line, output ONLY a concise 2-4 word heading title (no punctuation, no extra text).\n"
+        f"2. After a blank line, write a comprehensive introduction (200-250 words) about that heading. "
+        f"Include background context, significance, and what will be covered.\n\n"
+        f"Format:\nHEADING: <title here>\n\nINTRO: <introduction here>"
+    )
+
+    import time
+    for attempt in range(3):
+        try:
+            response = groq_llm.invoke(combined_prompt)
+            raw = getattr(response, "content", str(response)).strip()
+
+            heading = topic  # fallback
+            intro_text = raw
+
+            if "HEADING:" in raw:
+                parts = raw.split("HEADING:", 1)[1]
+                if "INTRO:" in parts:
+                    heading_part, intro_part = parts.split("INTRO:", 1)
+                    heading = heading_part.strip()
+                    intro_text = intro_part.strip()
+                else:
+                    heading = parts.split("\n")[0].strip()
+
+            return {"heading": heading, "intro": intro_text}
+        except Exception as e:
+            print(f"[WARNING] intro_agent attempt {attempt + 1} failed: {e}")
+            if attempt < 2:
+                time.sleep(3 * (attempt + 1))
+
+    # Final fallback if all retries fail
+    return {
+        "heading": topic,
+        "intro": f"{topic} is a significant and evolving subject with broad implications across multiple domains. This report explores its key aspects, current developments, and future outlook."
+    }
 
 def planner_agent(state: GraphState) -> Dict[str, Any]:
     topic = state["topic"]
     pages = state.get("pages", 3)
-    language = state.get("language", "English")
-    
-    num_subtopics = 1 + (2 * (pages - 2))
-    
-    print(f"[INFO] Pages: {pages}")
 
-    prompt1 = f"Give a 2-3 word heading title for the topic '{topic}' in English. Return ONLY the title."
-  
+    # Use heading already produced by intro_agent if available
+    heading = state.get("heading") or topic
+
+    num_subtopics = 1 + (2 * (pages - 2))
+    print(f"[INFO] Pages: {pages}, heading from intro: '{heading}'")
+
     groq_llm = get_groq_llm()
-    response_heading = groq_llm.invoke(prompt1)
-    
-    heading = getattr(response_heading, "content", str(response_heading)).strip()
     prompt = f"Break the topic '{heading}' into exactly {pages} major subtopics in English. Return only bullet points."
-    
-    response = groq_llm.invoke(prompt)
-    text = getattr(response, "content", str(response))
-    subtopics = [re.sub(r'^[-•*\d.\s]+', '', l).strip() for l in text.split("\n") if l.strip()]
-    
-    subtopics = subtopics[:num_subtopics] or [f"Overview of {topic}", "Key Aspects", "Future Outlook"]
-    
-    return {
-        "heading": heading,
-        "subtopics": subtopics
-    }
+
+    import time
+    for attempt in range(3):
+        try:
+            response = groq_llm.invoke(prompt)
+            text = getattr(response, "content", str(response))
+            subtopics = [re.sub(r'^[-•*\d.\s]+', '', l).strip() for l in text.split("\n") if l.strip()]
+            subtopics = subtopics[:num_subtopics] or [f"Overview of {topic}", "Key Aspects", "Future Outlook"]
+            return {"heading": heading, "subtopics": subtopics}
+        except Exception as e:
+            print(f"[WARNING] planner_agent attempt {attempt + 1} failed: {e}")
+            if attempt < 2:
+                time.sleep(3 * (attempt + 1))
+
+    # Fallback subtopics
+    subtopics = [f"Overview of {topic}", "Key Developments", "Applications", "Challenges", "Future Outlook"][:num_subtopics]
+    return {"heading": heading, "subtopics": subtopics}
 
 def retriever_agent(state: GraphState) -> Dict[str, Any]:
     content = {}
