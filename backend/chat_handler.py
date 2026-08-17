@@ -168,7 +168,7 @@ Your task is to answer the user's question based on the context, but you must TR
 
         llm = ChatGroq(
             api_key=groq_api_key,
-            model="llama-3.1-8b-instant",
+            model="openai/gpt-oss-120b",
             temperature=0.3,
             max_tokens=400,
             model_kwargs={"top_p": 0.9}

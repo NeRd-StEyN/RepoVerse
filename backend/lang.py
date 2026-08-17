@@ -17,8 +17,8 @@ def get_groq_llm():
         _groq_llm = ChatGroq(
             api_key=groq_api_key,
             temperature=0.7,
-            model_name="llama-3.1-8b-instant",
-            request_timeout=60,
+            model_name="openai/gpt-oss-120b",
+            request_timeout=45,
         )
     return _groq_llm
 
